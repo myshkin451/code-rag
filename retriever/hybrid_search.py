@@ -11,7 +11,13 @@ import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from typing import List, Dict, Any, Optional
-import os
+
+
+def _build_preview(doc_text: Optional[str], limit: int = 160) -> str:
+    if not doc_text:
+        return ""
+    compact = " ".join(doc_text.split())
+    return compact[:limit]
 
 class HybridSearcher:
     def __init__(self, db_path: str = "data/chroma_db"):
@@ -33,7 +39,7 @@ class HybridSearcher:
             col = self.client.get_collection(name, embedding_function=self.ef)
             self._cols[name] = col
             return col
-        except Exception as e:
+        except Exception:
             # print once for debug (or use logger)
             # print(f"[HybridSearcher] get_collection failed: {name} ({type(e).__name__}: {e})")
             return None
@@ -86,7 +92,7 @@ class HybridSearcher:
                 "score": base_score,
                 "metadata": meta,
                 "text_full": doc_text,
-                "text_preview": (doc_text or "")[:80].replace("\n", " ")
+                "text_preview": _build_preview(doc_text),
             })
 
         # 3. 符号/路径 增强 (Re-rank)

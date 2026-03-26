@@ -1,0 +1,9 @@
+embedding:
+  provider: chroma_onnx_minilm
+  model_name: all-MiniLM-L6-v2
+  storage_path: data/chroma_db
+  collection_prefix: code_chunks
+
+notes:
+  - "This file documents the stable default embedding setup used by the current release."
+  - "The backend does not dynamically load every field here yet."

@@ -27,18 +27,8 @@ const ALLOWED_EXTS = new Set([
   ".js",
   ".tsx",
   ".jsx",
-  ".py",
-  ".java",
-  ".go",
-  ".rs",
-  ".c",
-  ".cpp",
-  ".h",
-  ".md",
-  ".json",
-  ".yaml",
-  ".yml",
-  ".toml",
+  ".mjs",
+  ".cjs",
 ]);
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
@@ -53,15 +43,16 @@ export function getWorkspaceId(): string {
   return hash.slice(0, 16);
 }
 
-function addFilesToZip(zip: JSZip, rootPath: string, currentPath: string) {
+function addFilesToZip(zip: JSZip, rootPath: string, currentPath: string): number {
   const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+  let added = 0;
 
   for (const ent of entries) {
     const fullPath = path.join(currentPath, ent.name);
 
     if (ent.isDirectory()) {
       if (!IGNORE_DIRS.has(ent.name)) {
-        addFilesToZip(zip, rootPath, fullPath);
+        added += addFilesToZip(zip, rootPath, fullPath);
       }
       continue;
     }
@@ -77,7 +68,10 @@ function addFilesToZip(zip: JSZip, rootPath: string, currentPath: string) {
     const relPath = path.relative(rootPath, fullPath).replace(/\\/g, "/");
     const content = fs.readFileSync(fullPath);
     zip.file(relPath, content);
+    added += 1;
   }
+
+  return added;
 }
 
 async function pollJobStatus(apiBase: string, jobId: string, onTick?: (status: string) => void) {
@@ -120,7 +114,13 @@ export async function buildAndUploadIndex(opts?: { fresh?: boolean }) {
       progress.report({ message: "Zipping source code..." });
 
       const zip = new JSZip();
-      addFilesToZip(zip, rootPath, rootPath);
+      const fileCount = addFilesToZip(zip, rootPath, rootPath);
+
+      if (fileCount === 0) {
+        throw new Error(
+          "No supported JavaScript/TypeScript source files were found. CodeRAG currently indexes JS/TS workspaces only."
+        );
+      }
 
       const zipBuf: Buffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
 

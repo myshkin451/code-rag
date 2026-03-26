@@ -53,7 +53,7 @@ def _estimate_tokens(s: str) -> int:
     return max(1, math.ceil(len(s) / 4))
 
 # ------- app & 搜索器 单例 -------
-app = FastAPI(title="Code-RAG MVP", version="0.7.0")
+app = FastAPI(title="CodeRAG Agent", version="0.2.1")
 
 app.add_middleware(
     CORSMiddleware,
@@ -184,7 +184,7 @@ def search(
         req.query,
         top_k=req.top_k,
         symbol_boost=req.symbol_boost,
-        include_documents=False,
+        include_documents=True,
         collection_name=col_name # Pass collection name
     )
 
@@ -586,8 +586,7 @@ def index_status(job_id: str):
 
 
 # =============================================================================
-#  Modified: Agent (Agent doesn't natively support WS isolation yet,
-#  but you can update agent_search_adapter to take a collection name later)
+#  Agent
 # =============================================================================
 class AgentExplainRequest(BaseModel):
     query: str
@@ -600,9 +599,6 @@ class AgentExplainResponse(BaseModel):
     tool_input: Optional[Dict[str, Any]] = None
     tool_results: Optional[List[Dict[str, Any]]] = None
 
-# 暂时简单处理：Agent 仍查 code_chunks (default)，如果想支持 agent 查特定库，
-# 需要修改 run_code_agent 让它接收 collection 参数并透传给 search_func。
-# 这里演示如何让 search_func 闭包捕获 collection_name。
 def create_agent_search_adapter(col_name: str):
     def adapter(query: str, top_k: int = 6) -> List[Dict[str, Any]]:
         searcher = get_searcher()
@@ -633,11 +629,14 @@ def agent_explain(
 ):
     col_name = get_collection_name(x_workspace_id)
     search_adapter = create_agent_search_adapter(col_name)
+    client, cfg = get_client_for_request(ctx)
 
     try:
         answer, debug = run_code_agent(
             user_query=req.query,
             search_func=search_adapter,
+            client=client,
+            model=cfg.model,
             max_tokens=req.max_tokens,
         )
     except Exception as e:

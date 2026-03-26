@@ -1,12 +1,12 @@
 {
   "name": "code-rag-assistant",
   "displayName": "Code RAG Agent",
-  "description": "Your local AI coding assistant with AST-aware search & autonomous agent capabilities.",
-  "version": "0.2.0",
+  "description": "Local-first AST-aware code search and explain for JavaScript/TypeScript workspaces, with optional agent assistance.",
+  "version": "0.2.1",
   "publisher": "myshkin451",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Achernar-Eridani/code-rag"
+    "url": "https://github.com/myshkin451/code-rag"
   },
   "license": "MIT",
   "icon": "images/icon.png",
@@ -23,7 +23,8 @@
     "LLM",
     "Agent",
     "Code Search",
-    "OpenAI",
+    "JavaScript",
+    "TypeScript",
     "Local LLM"
   ],
   "galleryBanner": {
@@ -91,7 +92,7 @@
             "qwen_api"
           ],
           "default": "auto",
-          "description": "Force provider for /explain (auto uses backend default)."
+          "description": "Force provider for Explain and Agent requests (auto uses backend default)."
         },
         "rag.maxTokens": {
           "type": "number",

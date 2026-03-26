@@ -2,10 +2,7 @@
 from __future__ import annotations
 
 import json
-import os
 from typing import Callable, Dict, Any, List, Tuple
-
-from openai import OpenAI
 
 from ai.tools import AGENT_TOOLS
 
@@ -27,17 +24,12 @@ Guideline:
 3. Citation: You must cite the evidence using [#id] format at the end of relevant sentences.
 """
 
-# 由于使用openai function calling, 目前只能用在openai api
-def _get_openai_client() -> OpenAI:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set, cannot run Agent with OpenAI.")
-    return OpenAI(api_key=api_key)
-
 
 def run_code_agent(
     user_query: str,
     search_func: SearchFunc,
+    client: Any,
+    model: str,
     max_tokens: int = 512,
     default_top_k: int = 6,
 ) -> Tuple[str, Dict[str, Any]]:
@@ -52,9 +44,6 @@ def run_code_agent(
         answer: 最终回答（字符串）
         debug:  调试信息，包含 used_tool / tool_input / tool_results
     """
-    client = _get_openai_client()
-    model = os.getenv("RAG_LLM_MODEL", "gpt-4o-mini")
-
     # 1) 初始对话
     messages: List[Dict[str, Any]] = [
         {
