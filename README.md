@@ -66,6 +66,9 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
+The root `.env.example` is the Docker Compose template. `scripts/env.example`
+keeps a shell-export version for running backend pieces manually outside Compose.
+
 Backend default:
 
 - API: `http://127.0.0.1:8000`
